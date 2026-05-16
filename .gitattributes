@@ -1,0 +1,16 @@
+# Auto-detect text files and normalize line endings on commit
+* text=auto
+
+# Force LF on shell scripts (must be Unix line endings to run on Linux/macOS)
+*.sh text eol=lf
+
+# Markdown files: LF for cross-platform consistency
+*.md text eol=lf
+
+# PowerShell scripts: CRLF (native Windows convention)
+*.ps1 text eol=crlf
+
+# Binaries (none expected, but future-proof)
+*.png binary
+*.jpg binary
+*.pdf binary
