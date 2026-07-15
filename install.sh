@@ -108,7 +108,7 @@ for skill_path in "${skills[@]}"; do
             read -r -p "Overwrite? [y/N]: " reply
             if [[ ! "$reply" =~ ^[yY]$ ]]; then
                 info "Skipped $skill_name"
-                ((skipped++))
+                skipped=$((skipped + 1))
                 continue
             fi
         fi
@@ -117,7 +117,7 @@ for skill_path in "${skills[@]}"; do
 
     cp -R "$skill_path" "$target_path"
     success "Installed $skill_name -> $target_path"
-    ((installed++))
+    installed=$((installed + 1))
 done
 
 # --- Summary -----------------------------------------------------------------
