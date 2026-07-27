@@ -27,7 +27,7 @@ Identify all files containing the application version. Common examples:
 
 Verify with `Test-Path` (PowerShell) or `[ -f path ]` (Bash) before touching.
 
-Bonus: also update any `**Current version:** vX.Y.Z` at the top of `README.md`.
+**Mandatory when present**: a `**Current version:** vX.Y.Z` banner at the top of `README.md`. Look for it (`grep -n "Current version\|Versione corrente" README.md`) and update it in the same release commit. It is the first fact anyone reads when opening the repo, and left outside the routine it goes stale silently: on a real repo it sat 30 releases behind.
 
 ### B3.3 Close `[Unreleased]` in CHANGELOG
 Under `## [Unreleased]` (keeping `[Unreleased]` as empty header at top), add a new section `## [X.Y.Z] - YYYY-MM-DD` with all previously accumulated entries. Absolute today's date (`Get-Date -Format yyyy-MM-dd` on PowerShell, `date +%Y-%m-%d` on Bash).
