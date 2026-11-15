@@ -27,6 +27,8 @@ Se durante la sessione sono stati avviati container Docker per smoke test e l'ut
 docker compose -f <REPO_ROOT>/docker-compose.yml down
 ```
 
+Lo stesso vale per i server avviati per la demo di A3bis (dev server frontend/backend, database di prova con dati fittizi): fermali se l'utente non li sta più usando.
+
 Se Docker locale non è mai stato avviato in sessione, salta. Mai toccare la produzione.
 
 ## B5.3 Rimuovi il worktree corrente

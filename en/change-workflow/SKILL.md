@@ -1,13 +1,13 @@
 ---
 name: change-workflow
-description: Apply a 2-phase workflow to close every code change. Phase A (per self-contained change) pre-flight check, build, database migration audit, CHANGELOG, README audit, Conventional commit, push branch/PR by default or direct FF only for small fixes. Phase B (post-merge master) detects commits accumulated beyond the latest tag, proposes deploy, bumps version on confirmation, tags, pushes master --follow-tags, cleans up worktrees. Always checks parallel sessions (multiple worktrees) and migration revision id collisions. Use this skill on every code change, including minor ones, including long-running branches. Don't skip steps.
+description: Apply a 2-phase workflow to close every code change. Phase A (per self-contained change) pre-flight check, build, database migration audit, on-request demo and usage workflow for user-visible changes, CHANGELOG, user manual page (or README audit if the project has no manual), Conventional commit, push branch/PR by default or direct FF only for small fixes. Phase B (post-merge master) detects commits accumulated beyond the latest tag, proposes deploy, bumps version on confirmation, tags, pushes master --follow-tags, cleans up worktrees. Always checks parallel sessions (multiple worktrees) and migration revision id collisions. Use this skill on every code change, including minor ones, including long-running branches. Don't skip steps.
 ---
 
 # Code change workflow
 
 > **Shell convention** — On Windows + PowerShell, POSIX commands (`grep`, `find`, `xargs`, `uniq`, `sort`) don't work natively: run them with the Bash tool (git bash is available via WSL/Git for Windows). Commands like `Test-Path`, `Get-Date`, `Copy-Item` are PowerShell-only. Commands `git`/`gh`/`docker compose`/`npm` work in both. On Linux/macOS this distinction doesn't apply.
 
-> **Placeholders** — This skill uses `<REPO_ROOT>` for the main repo path (typically `C:/Code/<repo>` on Windows or `~/code/<repo>` on Unix), `<GITHUB_OWNER>/<GITHUB_REPO>` for the remote repo, `<MIGRATIONS_DIR>` for your ORM's migrations folder (e.g. `backend/alembic/versions` for Alembic, `db/migrate` for Rails, `prisma/migrations` for Prisma). Adapt to your project paths.
+> **Placeholders** — This skill uses `<REPO_ROOT>` for the main repo path (typically `C:/Code/<repo>` on Windows or `~/code/<repo>` on Unix), `<GITHUB_OWNER>/<GITHUB_REPO>` for the remote repo, `<MIGRATIONS_DIR>` for your ORM's migrations folder (e.g. `backend/alembic/versions` for Alembic, `db/migrate` for Rails, `prisma/migrations` for Prisma), `<MANUAL_DIR>` for the project's user manual folder (Markdown pages + an `img/` subfolder, e.g. `docs/manual` or `frontend/public/manual-md`; the real path is stated in the project's `CLAUDE.md`/`AGENTS.md`). Adapt to your project paths.
 
 This skill codifies the habit of closing every code change with a controlled mini-cycle, and of decoupling feature changes from release moments. The workflow has **two phases**:
 
@@ -70,6 +70,28 @@ Only if the change added/modified files in `<MIGRATIONS_DIR>`:
 - Update inside the file: `revision = "<new_id>"` and `down_revision = "<current_head_id>"`
 - Verify with dry-run that the chain is valid (e.g. `alembic upgrade head --sql`)
 
+### A3b. Demo and usage workflow (on request, user-visible changes only)
+
+After build/tests (and applied migrations) and **before** CHANGELOG, commit and PR.
+
+1. **Classify the change.**
+   - **User-visible**: new/changed pages or screens, usage flows, permissions/roles, notifications, prints/exports, messages shown to the user.
+   - **Internal**: calculations with no UI effect, tests, refactors, dependencies, documentation only, CI.
+2. **Internal change** → no question. State it in the summary: *"Demo: not needed (internal change)."* Go to A4.
+3. **User-visible change** → **ask** the user, with an explicit question, whether they want:
+   - a **demo**: the app running locally on **fake data**, with real screenshots of the affected steps;
+   - the step-by-step **usage workflow** (who does what, from which page, with what result).
+
+   **Never assume yes**, even if the user has always accepted before: ask every time.
+4. **On yes:**
+   - start the app locally (commands from `CLAUDE.md`/`AGENTS.md`), load fake data (the project's seeds/fixtures or data created for the occasion), **never production data**;
+   - show screenshots of the steps and write the step-by-step workflow;
+   - **wait for explicit approval**. If the user asks for changes → back to A1, then repeat A2-A3b.
+   - Keep the approved screenshots: they become the images of the manual page in A5.
+5. **On no:** note it in the summary (*"Demo: declined by the user"*) and continue.
+
+**The PR (A7) is opened only after the demo is approved**, when one was requested.
+
 ### A4. Update `CHANGELOG.md` (only `[Unreleased]`)
 
 Under `## [Unreleased]`, add a concise entry. Group by category ([Keep a Changelog](https://keepachangelog.com/) format):
@@ -79,7 +101,7 @@ Under `## [Unreleased]`, add a concise entry. Group by category ([Keep a Changel
 - `### Fixed` — resolved bugs
 - `### Removed` — things taken out
 - `### Security` — security patches
-- `### Docs` — README/CHANGELOG/docs updates (**custom category**, not standard Keep a Changelog — useful if README and CHANGELOG are kept in sync as user-facing manuals)
+- `### Docs` — user manual/README/CHANGELOG/docs updates (**custom category**, not standard Keep a Changelog — useful if manual, README and CHANGELOG are kept in sync)
 
 Standard Keep a Changelog category not always used: `Deprecated` (skip if you have an aggressive release policy that removes directly in MAJOR versions).
 
@@ -87,25 +109,34 @@ Each entry is 1-2 lines: **what changed and why**, not how.
 
 **Don't**: close `[Unreleased]` with a new version, touch version files (`package.json`, etc.), create tags. All that is Phase B.
 
-### A5. Pre-commit README audit
+### A5. User manual (and README audit for operational entries)
 
-Compare the just-added entries (and all those accumulated under `[Unreleased]`) against `README.md`:
+The **user manual** explains how features are used; the **README** stays for presentation, installation, deploy and configuration. A README that describes every feature grows endless and always lags behind: features go into the manual, one page per feature or area, with images.
 
-1. If README is not in context, read it with the Read tool.
-2. For each entry classify the impact:
+**Where the manual lives.** The path is project-specific: read it from `CLAUDE.md`/`AGENTS.md` (here `<MANUAL_DIR>`). If the project **has no manual** (no mention and no obvious folder), skip point 1 and apply the README audit of point 2 to user-visible entries too (classic behavior: Features, Permissions, Notifications sections of the README).
 
-   | Entry type | Affects README? | Typical section |
+Compare the just-added entries (and all those accumulated under `[Unreleased]`) against the manual and README:
+
+1. **User-visible change → manual page.**
+   - Update (or create) the `<MANUAL_DIR>` page describing the feature: what it's for, who can use it, the step-by-step workflow, any warnings. The workflow approved in A3b is the basis of the text.
+   - Images in `<MANUAL_DIR>/img/`: the demo screenshots, **fake data only, never production** (no real names, emails, amounts or documents), **compressed** (optimized PNG or WebP/JPEG, reasonable width, ideally < 200 KB each), with descriptive names (`<feature>-<step>.png`). Without a demo, update at least the text and flag the missing images in the summary.
+   - If the project has a page index (table of contents, menu, index file), add the entry.
+   - Add an entry under `### Docs` of `[Unreleased]` ("Manual: page X — Y") and include page and images in the **same commit/PR** as the change.
+   - Don't duplicate the feature description in the README: at most a link to the manual.
+2. **Operational entry → README audit.** If README is not in context, read it with the Read tool. Classify:
+
+   | Entry type | Where it goes | Typical section |
    |---|---|---|
-   | New module / user-visible feature | Yes | Features |
-   | New role / permissions change | Yes | Security/Permissions |
-   | New notification type / channel | Yes | Notifications |
-   | New env var / deploy change / new volume / new scheduler job | Yes | Deploy/Configuration |
-   | Bug fix / refactor / internal migration / deps without user impact | No | none |
+   | New module / user-visible feature | Manual (README only if the project has no manual) | feature page |
+   | New role / permissions change | Manual (README only if the project has no manual) | feature page / Permissions |
+   | New notification type / channel | Manual (README only if the project has no manual) | Notifications page |
+   | New env var / deploy change / new volume / new scheduler job | README | Deploy/Configuration |
+   | Bug fix / refactor / internal migration / deps without user impact | none | — |
 
-3. If at least one entry is user-visible/operational → update README sections, add an entry under `### Docs` of `[Unreleased]` ("README updated: section X — Y"), and include `README.md` in the `git add` of the **same commit** as the feature.
-4. If all entries are internal → state explicitly in chat: *"README audit: no update needed."*
+   If at least one entry is operational → update README sections, add an entry under `### Docs` ("README updated: section X — Y") and include `README.md` in the **same commit** as the feature.
+3. If all entries are internal → state explicitly in chat: *"Manual and README: no update needed."*
 
-Edge case: if the current change is "pure documentation" (typo in CHANGELOG/README), skip the audit.
+Edge case: if the current change is "pure documentation" (typo in CHANGELOG/README/manual), skip this step.
 
 ### A6. Git commit
 
@@ -164,11 +195,15 @@ gh pr create --title "<type>(<scope>): <description>" --body "$(cat <<'EOF'
 - [ ] Frontend build OK
 - [ ] Backend syntax/type check OK
 - [ ] (if applicable) migrations applied OK
-- [ ] README audit: done / not needed
+- [ ] Demo: approved / not requested / not needed (internal change)
+- [ ] User manual: page updated / not needed
+- [ ] README audit (operational entries): done / not needed
 
 EOF
 )"
 ```
+
+If the user asked for a demo in A3b, the PR is opened **only after** their explicit approval.
 
 After the PR, **Phase B does not start** until the PR is merged.
 
@@ -284,6 +319,7 @@ If the repo root contains `CLAUDE.md` or `AGENTS.md`, read it **at session start
 - **Readable history**: each commit does one clear thing, `git log` tells the evolution without archaeology.
 - **Surgical rollbacks**: `git revert` removes a change without touching the rest.
 - **CHANGELOG always up-to-date**: at release time the document is ready.
-- **README always aligned**: users reading GitHub never see a manual outdated relative to the code.
+- **Demo before the PR**: for user-visible changes the user sees real screenshots on fake data and approves before the PR exists.
+- **User manual always aligned**: every user-visible feature updates its page, with images, in the same PR; the README stays short (presentation, installation, deploy, configuration).
 - **Tracked parallel sessions**: multiple worktrees without silent collisions on CHANGELOG/migrations.
 - **Bump at real deploy**: no phantom versions, tags match actual releases.

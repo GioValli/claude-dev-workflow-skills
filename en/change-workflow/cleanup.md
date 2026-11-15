@@ -27,6 +27,8 @@ If during the session Docker containers were started for smoke tests and the use
 docker compose -f <REPO_ROOT>/docker-compose.yml down
 ```
 
+The same goes for servers started for the A3b demo (frontend/backend dev servers, test database with fake data): stop them if the user is no longer using them.
+
 If local Docker was never started in the session, skip. Never touch production.
 
 ## B5.3 Remove the current worktree

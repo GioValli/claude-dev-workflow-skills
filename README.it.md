@@ -12,7 +12,7 @@ Disponibili in **inglese** (`en/`) e **italiano** (`it/`).
 
 | Skill | Cosa fa |
 |---|---|
-| **`workflow-modifiche`** (EN: `change-workflow`) | Workflow a due fasi. Fase A chiude ogni modifica autocontenuta (pre-flight → build → migrazioni → CHANGELOG → audit README → commit → push/PR). Fase B gestisce il rilascio (bump versione → tag → push, su conferma esplicita). Include `cleanup.md` (pulizia worktree a fine sessione) e `deploy.md` (dettaglio procedura release). |
+| **`workflow-modifiche`** (EN: `change-workflow`) | Workflow a due fasi. Fase A chiude ogni modifica autocontenuta (pre-flight → build → migrazioni → demo e workflow d'uso su richiesta per le modifiche visibili → CHANGELOG → pagina del manuale d'uso con immagini, oppure audit README per le voci operative / i progetti senza manuale → commit → push/PR). Fase B gestisce il rilascio (bump versione → tag → push, su conferma esplicita). Include `cleanup.md` (pulizia worktree a fine sessione) e `deploy.md` (dettaglio procedura release). |
 | **`merge-pr`** | Chiude una Pull Request in una operazione: pre-merge check (mergeable / CI / review / branch up-to-date) → `gh pr merge --merge --delete-branch` → cleanup post-merge → proposta Fase B. |
 | **`audit-impostazioni`** (EN: `audit-settings-hub`) | Caso d'uso applicato: mantiene un hub Impostazioni admin come single source of truth. Trigger automatici su nuove pagine admin, job scheduler, migrazioni admin, voci `adminOnly` nelle sidebar workspace. Adatta la lista area/slug al tuo progetto. |
 
@@ -20,6 +20,7 @@ Disponibili in **inglese** (`en/`) e **italiano** (`it/`).
 
 - **Storico leggibile**: ogni commit fa una cosa chiara.
 - **Release prevedibili**: il bump di versione avviene solo quando l'utente dice "rilascia", mai automaticamente per-commit o per-PR. Le voci si accumulano sotto `## [Unreleased]` fino al rilascio.
+- **Demo prima della PR, manuale al posto di un README infinito**: per le modifiche visibili l'agente chiede se vuoi una demo su dati fittizi e il workflow d'uso, e apre la PR solo dopo la tua approvazione; le schermate approvate diventano una pagina del manuale d'uso del progetto, mentre il README resta per presentazione, installazione, deploy e configurazione.
 - **Niente versioni fantasma**: i tag git corrispondono a release reali su GitHub.
 - **Sicurezza in sessioni parallele**: più worktree senza collisioni silenti su CHANGELOG / migrazioni / file di versione.
 - **Report finali obbligatori**: il cleanup post-merge produce sempre un report scritto, così sai se i worktree sono stati rimossi, i branch eliminati, il master allineato.

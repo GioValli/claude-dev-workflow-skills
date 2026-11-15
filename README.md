@@ -12,7 +12,7 @@ Available in **English** (`en/`) and **Italian** (`it/`).
 
 | Skill | What it does |
 |---|---|
-| **`change-workflow`** (IT: `workflow-modifiche`) | Two-phase workflow. Phase A closes each self-contained change (pre-flight → build → migrations → CHANGELOG → README audit → commit → push/PR). Phase B handles release (version bump → tag → push, on explicit confirmation). Includes `cleanup.md` (worktree cleanup on session end) and `deploy.md` (release procedure detail). |
+| **`change-workflow`** (IT: `workflow-modifiche`) | Two-phase workflow. Phase A closes each self-contained change (pre-flight → build → migrations → demo and usage workflow on request for user-visible changes → CHANGELOG → user manual page with images, or README audit for operational entries / projects without a manual → commit → push/PR). Phase B handles release (version bump → tag → push, on explicit confirmation). Includes `cleanup.md` (worktree cleanup on session end) and `deploy.md` (release procedure detail). |
 | **`merge-pr`** | Closes a Pull Request in one operation: pre-merge check (mergeable / CI / review / branch up-to-date) → `gh pr merge --merge --delete-branch` → post-merge cleanup → Phase B proposal. |
 | **`audit-settings-hub`** (IT: `audit-impostazioni`) | Applied case-study: keeps an admin settings hub as the single source of truth. Triggers on new admin pages, scheduler jobs, admin migrations, and workspace-sidebar `adminOnly` entries. Adapt the area/slug list to your project. |
 
@@ -20,6 +20,7 @@ Available in **English** (`en/`) and **Italian** (`it/`).
 
 - **Readable history**: every commit does one clear thing.
 - **Predictable releases**: version bumps happen only when the user says "ship it", never automatically per-commit or per-PR. Entries accumulate under `## [Unreleased]` until release.
+- **Demo before the PR, manual instead of an endless README**: for user-visible changes the agent asks whether you want a demo on fake data and the usage workflow, and opens the PR only after your approval; the approved screenshots become a page of the project's user manual, while the README keeps only presentation, installation, deploy and configuration.
 - **No phantom versions**: git tags match actual GitHub releases.
 - **Parallel session safety**: multiple worktrees without silent collisions on CHANGELOG / migrations / version files.
 - **Required final reports**: post-merge cleanup always produces a written status, so you know whether worktrees were removed, branches deleted, master aligned.

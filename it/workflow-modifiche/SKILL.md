@@ -1,13 +1,13 @@
 ---
 name: workflow-modifiche
-description: Applica un workflow in 2 fasi per chiudere ogni modifica al codice. Fase A (per modifica autocontenuta) pre-flight check, build, audit migrazioni database, CHANGELOG, audit README, commit Conventional, push branch/PR di default o FF diretto solo per piccoli fix. Fase B (post-merge master) rileva commit accumulati oltre tag, propone deploy, bump versione su conferma, tag, push master --follow-tags, cleanup worktree. Verifica sempre sessioni parallele (worktree multipli) e collisioni di revision id nelle migrazioni. Usa questa skill ogni volta che modifichi codice, anche per cambi minimi, anche su branch lunghi. Non saltare i passi.
+description: Applica un workflow in 2 fasi per chiudere ogni modifica al codice. Fase A (per modifica autocontenuta) pre-flight check, build, audit migrazioni database, demo e workflow d'uso su richiesta per le modifiche visibili, CHANGELOG, pagina del manuale d'uso (o audit README se il progetto non ha un manuale), commit Conventional, push branch/PR di default o FF diretto solo per piccoli fix. Fase B (post-merge master) rileva commit accumulati oltre tag, propone deploy, bump versione su conferma, tag, push master --follow-tags, cleanup worktree. Verifica sempre sessioni parallele (worktree multipli) e collisioni di revision id nelle migrazioni. Usa questa skill ogni volta che modifichi codice, anche per cambi minimi, anche su branch lunghi. Non saltare i passi.
 ---
 
 # Workflow modifiche codice
 
 > **Convenzione shell** — Su Windows + PowerShell, i comandi POSIX (`grep`, `find`, `xargs`, `uniq`, `sort`) non funzionano nativamente: vanno eseguiti con la Bash tool (git bash è disponibile via WSL/Git for Windows). I comandi `Test-Path`, `Get-Date`, `Copy-Item` sono PowerShell-only. I comandi `git`/`gh`/`docker compose`/`npm` funzionano in entrambe. Su Linux/macOS la distinzione non si pone.
 
-> **Placeholder** — Questa skill usa `<REPO_ROOT>` per indicare il path al main repo (tipicamente `C:/Code/<repo>` su Windows o `~/code/<repo>` su Unix), `<GITHUB_OWNER>/<GITHUB_REPO>` per il repo remoto, `<MIGRATIONS_DIR>` per la cartella delle migrazioni del tuo ORM (es. `backend/alembic/versions` con Alembic, `db/migrate` con Rails, `prisma/migrations` con Prisma). Adatta ai path del tuo progetto.
+> **Placeholder** — Questa skill usa `<REPO_ROOT>` per indicare il path al main repo (tipicamente `C:/Code/<repo>` su Windows o `~/code/<repo>` su Unix), `<GITHUB_OWNER>/<GITHUB_REPO>` per il repo remoto, `<MIGRATIONS_DIR>` per la cartella delle migrazioni del tuo ORM (es. `backend/alembic/versions` con Alembic, `db/migrate` con Rails, `prisma/migrations` con Prisma), `<MANUAL_DIR>` per la cartella del manuale d'uso del progetto (pagine Markdown + sottocartella `img/`, es. `docs/manuale` o `frontend/public/manuale-md`; il percorso reale è indicato nel `CLAUDE.md`/`AGENTS.md` del progetto). Adatta ai path del tuo progetto.
 
 Questa skill codifica l'abitudine di chiudere ogni modifica di codice con un mini-ciclo controllato, e di disaccoppiare la modifica feature dal momento del rilascio. Il workflow è in **due fasi**:
 
@@ -70,6 +70,28 @@ Solo se la modifica ha aggiunto/modificato file in `<MIGRATIONS_DIR>`:
 - Aggiorna nel file: `revision = "<nuovo_id>"` e `down_revision = "<id_della_head_corrente>"`
 - Verifica con dry-run che la chain sia valida (es. `alembic upgrade head --sql`)
 
+### A3bis. Demo e workflow d'uso (su richiesta, solo per modifiche visibili)
+
+Dopo build/test (e migrazioni applicate) e **prima** di CHANGELOG, commit e PR.
+
+1. **Classifica la modifica.**
+   - **Visibile** all'utente: pagine o schermate nuove/cambiate, flussi d'uso, permessi/ruoli, notifiche, stampe/export, messaggi mostrati all'utente.
+   - **Interna**: calcoli senza effetto sull'interfaccia, test, refactor, dipendenze, sola documentazione, CI.
+2. **Modifica interna** → nessuna domanda. Dichiaralo nel riepilogo: *"Demo: non necessaria (modifica interna)."* Passa ad A4.
+3. **Modifica visibile** → **chiedi** all'utente, con una domanda esplicita, se vuole:
+   - una **demo**: app avviata in locale su **dati fittizi**, con schermate reali dei passaggi toccati;
+   - il **workflow d'uso** passo passo (chi fa cosa, da quale pagina, con quale risultato).
+
+   **Mai dare per scontato il sì**, nemmeno se in passato ha sempre accettato: si chiede ogni volta.
+4. **Con il sì:**
+   - avvia l'app in locale (comandi dal `CLAUDE.md`/`AGENTS.md`), popola dati fittizi (seed/fixture del progetto o dati creati per l'occasione), **mai dati di produzione**;
+   - mostra le schermate dei passaggi e scrivi il workflow passo passo;
+   - **attendi l'approvazione esplicita**. Se l'utente chiede correzioni → torna ad A1, poi ripeti A2-A3bis.
+   - Conserva le schermate approvate: diventano le immagini della pagina del manuale in A5.
+5. **Con il no:** prendine nota nel riepilogo (*"Demo: rifiutata dall'utente"*) e prosegui.
+
+**La PR (A7) si apre solo dopo l'approvazione della demo**, quando è stata richiesta.
+
 ### A4. Aggiorna `CHANGELOG.md` (solo `[Unreleased]`)
 
 Sotto `## [Unreleased]`, aggiungi una voce sintetica. Raggruppa per categoria (formato [Keep a Changelog](https://keepachangelog.com/) tradotto in italiano):
@@ -79,7 +101,7 @@ Sotto `## [Unreleased]`, aggiungi una voce sintetica. Raggruppa per categoria (f
 - `### Fix` — bug risolti (`Fixed`)
 - `### Rimozioni` — cose tolte (`Removed`)
 - `### Sicurezza` — patch di sicurezza (`Security`)
-- `### Documentazione` — aggiornamenti README/CHANGELOG/docs (**categoria custom**, non standard Keep a Changelog — utile se README e CHANGELOG sono manuali sincronizzati)
+- `### Documentazione` — aggiornamenti manuale d'uso/README/CHANGELOG/docs (**categoria custom**, non standard Keep a Changelog — utile se manuale, README e CHANGELOG sono tenuti sincronizzati)
 
 Categoria standard Keep a Changelog non sempre usata: `Deprecated` (rimuovi direttamente in versione MAJOR se hai una policy di rilascio aggressiva).
 
@@ -87,25 +109,34 @@ Ogni voce è 1-2 righe: **cosa è cambiato e perché**, non il come.
 
 **Non fare**: chiudere `[Unreleased]` con una nuova versione, toccare i file di versione (`package.json`, ecc.), creare tag. Tutto questo è Fase B.
 
-### A5. Audit README pre-commit
+### A5. Manuale d'uso (e audit README per le voci operative)
 
-Confronta le voci appena aggiunte (e tutte quelle accumulate sotto `[Unreleased]`) con `README.md`:
+Il **manuale d'uso** spiega come si usano le funzioni; il **README** resta per presentazione, installazione, deploy e configurazione. Un README che descrive ogni funzione diventa infinito e resta sempre indietro: le funzioni vanno nel manuale, una pagina per funzione o area, con immagini.
 
-1. Se il README non è in contesto, leggilo con la tool Read.
-2. Per ciascuna voce classifica l'impatto:
+**Dove sta il manuale.** Il percorso è specifico del progetto: leggilo dal `CLAUDE.md`/`AGENTS.md` (qui `<MANUAL_DIR>`). Se il progetto **non ha un manuale** (nessuna indicazione e nessuna cartella evidente), salta il punto 1 e applica l'audit README del punto 2 anche alle voci user-visible (comportamento classico: sezioni Funzionalità, Permessi, Notifiche del README).
 
-   | Tipo voce | Impatta README? | Sezione tipica |
+Confronta le voci appena aggiunte (e tutte quelle accumulate sotto `[Unreleased]`) con manuale e README:
+
+1. **Modifica visibile → pagina del manuale.**
+   - Aggiorna (o crea) la pagina di `<MANUAL_DIR>` che descrive la funzione: a cosa serve, chi può usarla, il workflow passo passo, eventuali avvisi. Il workflow approvato in A3bis è la base del testo.
+   - Immagini in `<MANUAL_DIR>/img/`: le schermate della demo, **solo da dati fittizi, mai da produzione** (niente nomi, email, importi o documenti reali), **compresse** (PNG ottimizzato o WebP/JPEG, larghezza ragionevole, idealmente < 200 KB l'una), con nomi parlanti (`<funzione>-<passo>.png`). Senza demo, aggiorna almeno il testo e segnala nel riepilogo che mancano le immagini.
+   - Se il progetto ha un indice delle pagine (sommario, menu, file di indice), aggiungi la voce.
+   - Aggiungi una voce sotto `### Documentazione` di `[Unreleased]` ("Manuale: pagina X — Y") e includi pagina e immagini nello **stesso commit/PR** della modifica.
+   - Non duplicare nel README la descrizione della funzione: al massimo un rimando al manuale.
+2. **Voce operativa → audit README.** Se il README non è in contesto, leggilo con la tool Read. Classifica:
+
+   | Tipo voce | Dove va | Sezione tipica |
    |---|---|---|
-   | Nuovo modulo / feature user-visible | Sì | Funzionalità |
-   | Nuovo ruolo / cambio permessi | Sì | Sicurezza/Permessi |
-   | Nuovo tipo notifica / nuovo canale | Sì | Notifiche |
-   | Nuova env var / cambio deploy / nuovo volume / nuovo job scheduler | Sì | Deploy/Configurazione |
-   | Fix bug / refactor / migration interna / dipendenze senza impatto utente | No | nessuna |
+   | Nuovo modulo / feature user-visible | Manuale (README solo se il progetto non ha manuale) | pagina della funzione |
+   | Nuovo ruolo / cambio permessi | Manuale (README solo se il progetto non ha manuale) | pagina della funzione / Permessi |
+   | Nuovo tipo notifica / nuovo canale | Manuale (README solo se il progetto non ha manuale) | pagina Notifiche |
+   | Nuova env var / cambio deploy / nuovo volume / nuovo job scheduler | README | Deploy/Configurazione |
+   | Fix bug / refactor / migration interna / dipendenze senza impatto utente | nessuno | — |
 
-3. Se almeno una voce è user-visible/operativa → aggiorna le sezioni del README, aggiungi una voce sotto `### Documentazione` di `[Unreleased]` ("README aggiornato: sezione X — Y"), e includi `README.md` nel `git add` dello **stesso commit** della feature.
-4. Se tutte le voci sono interne → dichiara esplicitamente in chat: *"Audit README: nessun aggiornamento necessario."*
+   Se c'è almeno una voce operativa → aggiorna le sezioni del README, aggiungi una voce sotto `### Documentazione` ("README aggiornato: sezione X — Y") e includi `README.md` nello **stesso commit** della feature.
+3. Se tutte le voci sono interne → dichiara esplicitamente in chat: *"Manuale e README: nessun aggiornamento necessario."*
 
-Caso edge: se la modifica corrente è "documentazione pura" (typo in CHANGELOG/README), salta l'audit.
+Caso edge: se la modifica corrente è "documentazione pura" (typo in CHANGELOG/README/manuale), salta questo passo.
 
 ### A6. Commit git
 
@@ -164,11 +195,15 @@ gh pr create --title "<tipo>(<scope>): <descrizione>" --body "$(cat <<'EOF'
 - [ ] Build frontend OK
 - [ ] Syntax/type check backend OK
 - [ ] (se applicabile) migrazioni applicate OK
-- [ ] Audit README: fatto / non necessario
+- [ ] Demo: approvata / non richiesta / non necessaria (modifica interna)
+- [ ] Manuale d'uso: pagina aggiornata / non necessario
+- [ ] Audit README (voci operative): fatto / non necessario
 
 EOF
 )"
 ```
+
+Se in A3bis l'utente ha chiesto la demo, la PR si apre **solo dopo** la sua approvazione esplicita.
 
 Dopo la PR, **Fase B non parte** finché la PR non viene mergiata.
 
@@ -284,6 +319,7 @@ Se la root del repo contiene `CLAUDE.md` o `AGENTS.md`, leggilo **all'inizio del
 - **Storico leggibile**: ogni commit fa una cosa chiara, `git log` racconta l'evoluzione senza archeologia.
 - **Rollback chirurgici**: `git revert` rimuove un cambio senza toccare il resto.
 - **CHANGELOG sempre aggiornato**: al momento del rilascio il documento è pronto.
-- **README sempre allineato**: gli utenti che leggono GitHub non vedono mai un manuale obsoleto rispetto al codice.
+- **Demo prima della PR**: per le modifiche visibili l'utente vede schermate reali su dati fittizi e approva prima che la PR esista.
+- **Manuale d'uso sempre allineato**: ogni funzione visibile aggiorna la sua pagina, con immagini, nella stessa PR; il README resta corto (presentazione, installazione, deploy, configurazione).
 - **Sessioni parallele tracciate**: worktree multipli senza collisioni silenti su CHANGELOG/migrazioni.
 - **Bump al deploy reale**: niente versioni fantasma, i tag corrispondono a release effettive.
