@@ -24,8 +24,9 @@ Before touching any file:
 
 1. `git status` → clean working tree (no rebase/merge/cherry-pick in progress). If there's a paused operation, **stop and notify the user**.
 2. Current branch: must be `claude/*`, `feature/*` or equivalent. **Don't work directly on `master`/`main`**.
-3. `git worktree list` → record other active worktrees.
-4. For each other worktree: `git -C <path> status --short` + `git -C <path> diff origin/master --name-only`. If other worktrees modified `CHANGELOG.md`, files in `<MIGRATIONS_DIR>`, application version files (`package.json`, `pyproject.toml`, `Cargo.toml`, etc.) or `README.md` → **warn the user about conflict risk** (don't block).
+3. **Worktree isolation.** If the cwd is under `.../.claude/worktrees/<name>` but `git rev-parse --show-toplevel` is **not** under `.claude/worktrees/` (it resolves to the main repo), the session is **not isolated**: you're editing the shared main working tree, not a dedicated worktree. Not blocking, but from here on: (a) treat every edit/commit as landing on the shared tree, (b) with parallel sessions the branch can change under you → **re-verify `git branch --show-current` right before committing**, (c) commit only explicitly-staged files, **never `git add -A`** (you might sweep up other sessions' changes). (Note: comparing `--git-dir` with `--git-common-dir` is NOT reliable — one is absolute, the other relative.)
+4. `git worktree list` → record other active worktrees.
+5. For each other worktree: `git -C <path> status --short` + `git -C <path> diff origin/master --name-only`. If other worktrees modified `CHANGELOG.md`, files in `<MIGRATIONS_DIR>`, application version files (`package.json`, `pyproject.toml`, `Cargo.toml`, etc.) or `README.md` → **warn the user about conflict risk** (don't block).
 
 ### A1. Apply the change
 

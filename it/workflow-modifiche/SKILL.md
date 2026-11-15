@@ -24,8 +24,9 @@ Prima di toccare file:
 
 1. `git status` → working tree pulito (no rebase/merge/cherry-pick in corso). Se c'è un'operazione in pausa, **fermati e segnala all'utente**.
 2. Branch corrente: deve essere `claude/*` o `feature/*` o equivalente. **Non lavorare direttamente su `master`/`main`**.
-3. `git worktree list` → registra altri worktree attivi.
-4. Per ogni altro worktree: `git -C <path> status --short` + `git -C <path> diff origin/master --name-only`. Se altri worktree hanno modificato `CHANGELOG.md`, file in `<MIGRATIONS_DIR>`, file con la versione applicativa (`package.json`, `pyproject.toml`, `Cargo.toml`, ecc.) o `README.md` → **segnala all'utente il rischio di conflitto** (non bloccare).
+3. **Isolamento worktree.** Se la cwd è sotto `.../.claude/worktrees/<nome>` ma `git rev-parse --show-toplevel` **non** è sotto `.claude/worktrees/` (risolve al repo principale), la sessione **non è isolata**: stai editando il working tree principale condiviso, non un worktree dedicato. Non è un errore bloccante, ma d'ora in poi: (a) considera che ogni edit/commit va sul tree condiviso, (b) con sessioni parallele il branch può cambiare sotto i piedi → **ri-verifica `git branch --show-current` subito prima del commit**, (c) committa solo file staged esplicitamente, **mai `git add -A`** (potresti raccogliere modifiche di altre sessioni). (NB: confrontare `--git-dir` con `--git-common-dir` NON è affidabile — uno è assoluto, l'altro relativo.)
+4. `git worktree list` → registra altri worktree attivi.
+5. Per ogni altro worktree: `git -C <path> status --short` + `git -C <path> diff origin/master --name-only`. Se altri worktree hanno modificato `CHANGELOG.md`, file in `<MIGRATIONS_DIR>`, file con la versione applicativa (`package.json`, `pyproject.toml`, `Cargo.toml`, ecc.) o `README.md` → **segnala all'utente il rischio di conflitto** (non bloccare).
 
 ### A1. Applica la modifica
 
