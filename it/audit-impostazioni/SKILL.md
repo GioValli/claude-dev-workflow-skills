@@ -1,6 +1,6 @@
 ---
 name: audit-impostazioni
-description: Verifica e aggiorna il hub /impostazioni (o equivalente settings hub admin) quando una modifica al codice aggiunge nuove pagine admin, nuovi job scheduler, nuove migrazioni di tabelle admin-only, nuove voci adminOnly nelle sidebar workspace, o nuove route sotto /admin/* o /impostazioni/*. Decide se serve nuova voce in settingsNav.ts + route /impostazioni/<area>/<voce> + redirect dalle vecchie URL, oppure se la modifica è interna e non impatta il hub. Eseguila come step aggiuntivo dopo A5 (audit README) della skill workflow-modifiche, ogni volta che la modifica tocca file admin-visible. Anche per cambi minimi.
+description: Verifica e aggiorna il hub /impostazioni (o equivalente settings hub admin) quando una modifica al codice aggiunge nuove pagine admin, nuovi job scheduler, nuove migrazioni di tabelle admin-only, nuove voci adminOnly nelle sidebar workspace, o nuove route sotto /admin/* o /impostazioni/*. Decide se serve nuova voce in settingsNav.ts + route /impostazioni/<area>/<voce> + redirect dalle vecchie URL, oppure se la modifica è interna e non impatta il hub. Eseguila come step aggiuntivo dopo A5 (manuale d'uso / audit README) della skill workflow-modifiche, ogni volta che la modifica tocca file admin-visible. Anche per cambi minimi.
 ---
 
 # Audit hub Impostazioni
@@ -203,10 +203,10 @@ Audit:
 
 ## Integrazione con workflow-modifiche
 
-Questa skill è uno **step aggiuntivo dopo A5** (audit README) della skill `workflow-modifiche`:
+Questa skill è uno **step aggiuntivo dopo A5** (manuale d'uso / audit README) della skill `workflow-modifiche`:
 
 ```
-... A1 (modifica) → A2 (build) → A3 (alembic) → A4 (CHANGELOG) → A5 (audit README) → A5.5 (audit-impostazioni) → A6 (commit) → A7 (push/PR) ...
+... A1 (modifica) → A2 (build) → A3 (alembic) → A3bis (demo e workflow, su richiesta) → A4 (CHANGELOG) → A5 (manuale d'uso / audit README) → A5.5 (audit-impostazioni) → A6 (commit) → A7 (push/PR) ...
 ```
 
 Quando in A5.5 trovi voci da aggiungere/spostare, includile **nello stesso commit** della modifica originale. NON fare un commit separato per l'audit impostazioni: è parte integrante della feature.

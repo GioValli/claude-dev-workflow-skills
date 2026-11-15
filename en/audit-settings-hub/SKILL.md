@@ -1,6 +1,6 @@
 ---
 name: audit-settings-hub
-description: Verify and update the /settings admin hub when a code change adds new admin pages, new scheduler jobs, new admin-only table migrations, new adminOnly entries in workspace sidebars, or new routes under /admin/* or /settings/*. Decide whether you need a new entry in settingsNav.ts + route /settings/<area>/<item> + redirect from old URLs, or whether the change is internal and doesn't impact the hub. Run it as an additional step after A5 (README audit) of the change-workflow skill, whenever the change touches admin-visible files. Even for minor changes.
+description: Verify and update the /settings admin hub when a code change adds new admin pages, new scheduler jobs, new admin-only table migrations, new adminOnly entries in workspace sidebars, or new routes under /admin/* or /settings/*. Decide whether you need a new entry in settingsNav.ts + route /settings/<area>/<item> + redirect from old URLs, or whether the change is internal and doesn't impact the hub. Run it as an additional step after A5 (user manual / README audit) of the change-workflow skill, whenever the change touches admin-visible files. Even for minor changes.
 ---
 
 # Settings hub audit
@@ -203,10 +203,10 @@ Audit:
 
 ## Integration with change-workflow
 
-This skill is an **additional step after A5** (README audit) of the `change-workflow` skill:
+This skill is an **additional step after A5** (user manual / README audit) of the `change-workflow` skill:
 
 ```
-... A1 (change) → A2 (build) → A3 (migrations) → A4 (CHANGELOG) → A5 (README audit) → A5.5 (audit-settings-hub) → A6 (commit) → A7 (push/PR) ...
+... A1 (change) → A2 (build) → A3 (migrations) → A3b (demo and workflow, on request) → A4 (CHANGELOG) → A5 (user manual / README audit) → A5.5 (audit-settings-hub) → A6 (commit) → A7 (push/PR) ...
 ```
 
 When in A5.5 you find entries to add/move, include them **in the same commit** as the original change. Do NOT make a separate commit for the settings audit: it's part of the feature.
